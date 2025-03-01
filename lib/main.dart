@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -28,16 +27,16 @@ class MyApp extends StatelessWidget {
             designation: args['designation'], // Pass the designation argument
           );
         },
-        // '/signup': (context) => SignUpScreen(),
-        // '/addPatient': (context) => AddPatientScreen(),
+        '/signup': (context) => SignUpScreen(), // Added SignUpScreen to routes
+        '/addPatient': (context) => AddPatientScreen(),
         '/patientDetails': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return PatientDetailsScreen(
             patientId: args['patientId'], // Pass the patientId
           );
         },
-        // '/medicalRecords': (context) => MedicalRecordsScreen(),
-        // '/editPatient': (context) => EditPatientScreen(),
+      //  '/medicalRecords': (context) => MedicalRecordsScreen(),
+       // '/editPatient': (context) => EditPatientScreen(),
       },
     );
   }

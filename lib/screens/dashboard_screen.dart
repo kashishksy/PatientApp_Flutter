@@ -108,7 +108,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    return Scaffold(
+    return Scaffold(appBar: AppBar(
+      title: Text('Patient Details'),
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back),
+        onPressed: () {
+          Navigator.pop(context);
+        },
+      ),
+    ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
