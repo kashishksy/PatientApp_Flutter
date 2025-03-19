@@ -55,7 +55,10 @@ dev_dependencies:
 flutter:
  # Assets (images, etc.)
   assets:
-    - assets/sencare-high-resolution-logo.png
+    - assets/
+    # Or list them individually:
+    # - assets/divyanshoo.jpg
+    # - assets/kashish.jpg
    # fonts
   fonts:
     - family: AlumniSansPinstripe

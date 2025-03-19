@@ -7,7 +7,8 @@ class DashboardScreen extends StatefulWidget {
   final String user;
   final String designation;
 
-  DashboardScreen({required this.user, required this.designation});
+  const DashboardScreen(
+      {super.key, required this.user, required this.designation});
 
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
@@ -108,15 +109,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
-    return Scaffold(appBar: AppBar(
-      title: Text('Patient Details'),
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back),
-        onPressed: () {
-          Navigator.pop(context);
-        },
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Patient Details'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
-    ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -132,7 +134,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'FunnelDisplay', // Use FunnelDisplay for header
+                      fontFamily:
+                          'FunnelDisplay', // Use FunnelDisplay for header
                     ),
                   ),
                   SizedBox(width: 10),
@@ -152,7 +155,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   color: Colors.grey,
-                  fontFamily: 'FunnelDisplay', // Use FunnelDisplay for designation
+                  fontFamily:
+                      'FunnelDisplay', // Use FunnelDisplay for designation
                 ),
               ),
               SizedBox(height: 20),
@@ -162,7 +166,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 decoration: InputDecoration(
                   hintText: 'Search Patients',
                   hintStyle: TextStyle(
-                    fontFamily: 'FunnelDisplay', // Use FunnelDisplay for hint text
+                    fontFamily:
+                        'FunnelDisplay', // Use FunnelDisplay for hint text
                   ),
                   filled: true,
                   fillColor: Colors.grey[200],
@@ -172,7 +177,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 style: TextStyle(
-                  fontFamily: 'FunnelDisplay', // Use FunnelDisplay for input text
+                  fontFamily:
+                      'FunnelDisplay', // Use FunnelDisplay for input text
                 ),
                 onChanged: (value) {
                   setState(() {
@@ -201,10 +207,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'FunnelDisplay', // Use FunnelDisplay for dropdown text
+                              fontFamily:
+                                  'FunnelDisplay', // Use FunnelDisplay for dropdown text
                             ),
                           ),
-                          Icon(dropdownVisible ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+                          Icon(dropdownVisible
+                              ? Icons.arrow_drop_up
+                              : Icons.arrow_drop_down),
                         ],
                       ),
                     ),
@@ -216,7 +225,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: Text(
                             'Show All',
                             style: TextStyle(
-                              fontFamily: 'FunnelDisplay', // Use FunnelDisplay for menu items
+                              fontFamily:
+                                  'FunnelDisplay', // Use FunnelDisplay for menu items
                             ),
                           ),
                           onTap: () => handleFilterSelect('All'),
@@ -225,7 +235,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: Text(
                             'Show Critical',
                             style: TextStyle(
-                              fontFamily: 'FunnelDisplay', // Use FunnelDisplay for menu items
+                              fontFamily:
+                                  'FunnelDisplay', // Use FunnelDisplay for menu items
                             ),
                           ),
                           onTap: () => handleFilterSelect('Critical'),
@@ -234,7 +245,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: Text(
                             'Show Stable',
                             style: TextStyle(
-                              fontFamily: 'FunnelDisplay', // Use FunnelDisplay for menu items
+                              fontFamily:
+                                  'FunnelDisplay', // Use FunnelDisplay for menu items
                             ),
                           ),
                           onTap: () => handleFilterSelect('Stable'),
@@ -243,7 +255,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: Text(
                             'Show Medium',
                             style: TextStyle(
-                              fontFamily: 'FunnelDisplay', // Use FunnelDisplay for menu items
+                              fontFamily:
+                                  'FunnelDisplay', // Use FunnelDisplay for menu items
                             ),
                           ),
                           onTap: () => handleFilterSelect('Medium'),
@@ -264,7 +277,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
-                      fontFamily: 'FunnelDisplay', // Use FunnelDisplay for column headers
+                      fontFamily:
+                          'FunnelDisplay', // Use FunnelDisplay for column headers
                     ),
                   ),
                   Text(
@@ -273,7 +287,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
-                      fontFamily: 'FunnelDisplay', // Use FunnelDisplay for column headers
+                      fontFamily:
+                          'FunnelDisplay', // Use FunnelDisplay for column headers
                     ),
                   ),
                 ],
@@ -291,7 +306,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Container(
                         padding: EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+                          border: Border(
+                              bottom: BorderSide(color: Colors.grey[300]!)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,7 +316,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               patient['name'],
                               style: TextStyle(
                                 fontSize: 18,
-                                fontFamily: 'FunnelDisplay', // Use FunnelDisplay for patient names
+                                fontFamily:
+                                    'FunnelDisplay', // Use FunnelDisplay for patient names
                               ),
                             ),
                             Text(
@@ -308,7 +325,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'FunnelDisplay', // Use FunnelDisplay for patient status
+                                fontFamily:
+                                    'FunnelDisplay', // Use FunnelDisplay for patient status
                                 color: _getStatusColor(patient['status']),
                               ),
                             ),
@@ -336,7 +354,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'FunnelDisplay', // Use FunnelDisplay for button text
+                    fontFamily:
+                        'FunnelDisplay', // Use FunnelDisplay for button text
                   ),
                 ),
               ),

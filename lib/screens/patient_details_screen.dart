@@ -6,7 +6,7 @@ import 'dart:convert';
 class PatientDetailsScreen extends StatefulWidget {
   final String patientId;
 
-  PatientDetailsScreen({required this.patientId});
+  const PatientDetailsScreen({super.key, required this.patientId});
 
   @override
   _PatientDetailsScreenState createState() => _PatientDetailsScreenState();

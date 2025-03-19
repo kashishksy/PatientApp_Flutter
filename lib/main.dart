@@ -4,14 +4,14 @@ import 'screens/dashboard_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/add_patient_screen.dart';
 import 'screens/patient_details_screen.dart';
-import 'screens/medical_records_screen.dart';
-import 'screens/edit_patient_screen.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

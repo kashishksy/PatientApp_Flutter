@@ -1,10 +1,11 @@
-import 'dart:io'; 
+import 'dart:io';
 import 'package:flutter/material.dart';
-//import 'package:image_picker/image_picker.dart'; 
+//import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; 
 
 class AddPatientScreen extends StatefulWidget {
+  const AddPatientScreen({super.key});
+
   @override
   _AddPatientScreenState createState() => _AddPatientScreenState();
 }
@@ -12,18 +13,21 @@ class AddPatientScreen extends StatefulWidget {
 class _AddPatientScreenState extends State<AddPatientScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
-  final TextEditingController _admissionDateController = TextEditingController();
-  final TextEditingController _dischargeDateController = TextEditingController();
+  final TextEditingController _admissionDateController =
+      TextEditingController();
+  final TextEditingController _dischargeDateController =
+      TextEditingController();
   final TextEditingController _departmentController = TextEditingController();
   final TextEditingController _statusController = TextEditingController();
 
   String? _gender;
-  File? _photo; 
+  File? _photo;
 
   // Function to handle photo selection
   Future<void> _pickPhoto() async {
-    final ImagePicker _picker = ImagePicker();
-    final File? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final ImagePicker picker = ImagePicker();
+    final File? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
@@ -36,12 +40,14 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   Future<void> _submitPatient() async {
     if (_nameController.text.isEmpty || _ageController.text.isEmpty) {
       // Show alert if required fields are empty
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please fill all fields")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Please fill all fields")));
       return;
     }
 
     try {
-      final uri = Uri.parse('https://patientdbrepo.onrender.com/api/patient/create');
+      final uri =
+          Uri.parse('https://patientdbrepo.onrender.com/api/patient/create');
       var request = http.MultipartRequest('POST', uri)
         ..fields['name'] = _nameController.text
         ..fields['age'] = _ageController.text
@@ -56,13 +62,16 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       var response = await request.send();
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Patient added successfully")));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Patient added successfully")));
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add patient")));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Failed to add patient")));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
 
@@ -92,16 +101,19 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(60),
                     image: _photo != null
-                        ? DecorationImage(image: FileImage(_photo!), fit: BoxFit.cover)
+                        ? DecorationImage(
+                            image: FileImage(_photo!), fit: BoxFit.cover)
                         : null,
                   ),
                   child: _photo == null
-                      ? Center(child: Text("Tap to add photo", style: TextStyle(color: Colors.black45)))
+                      ? Center(
+                          child: Text("Tap to add photo",
+                              style: TextStyle(color: Colors.black45)))
                       : null,
                 ),
               ),
               SizedBox(height: 20),
-              
+
               // Text Inputs
               TextField(
                 controller: _nameController,
@@ -175,7 +187,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
               ElevatedButton(
                 onPressed: _submitPatient,
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15), backgroundColor: Colors.blue,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  backgroundColor: Colors.blue,
                 ),
                 child: Text('Submit'),
               ),
