@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 //import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
@@ -48,28 +49,49 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     try {
       final uri =
           Uri.parse('https://patientdbrepo.onrender.com/api/patient/create');
-      var request = http.MultipartRequest('POST', uri)
-        ..fields['name'] = _nameController.text
-        ..fields['age'] = _ageController.text
-        ..fields['dateOfAdmission'] = _admissionDateController.text
-        ..fields['dateOfDischarge'] = _dischargeDateController.text
-        ..fields['department'] = _departmentController.text
-        ..fields['status'] = _statusController.text
-        ..fields['gender'] = _gender ?? ''
-        // Add photo if available
-        ..files.add(await http.MultipartFile.fromPath('photo', _photo!.path));
 
-      var response = await request.send();
+      // Check if we're using the photo
+      String? base64Image;
+      if (_photo != null) {
+        List<int> imageBytes = await _photo!.readAsBytes();
+        base64Image = base64Encode(imageBytes);
+      }
+
+      // Create request JSON similar to the React Native version
+      final requestBody = {
+        'name': _nameController.text,
+        'age': _ageController.text,
+        'dateOfAdmission': _admissionDateController.text,
+        'dateOfDischarge': _dischargeDateController.text,
+        'department': _departmentController.text,
+        'status': _statusController.text,
+        'gender': _gender ?? '',
+        if (base64Image != null) 'photo': base64Image,
+      };
+
+      // Send as JSON instead of multipart
+      final response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(requestBody),
+      );
 
       if (response.statusCode == 200) {
+        print("Success response: ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Patient added successfully")));
-        Navigator.pop(context);
+
+        // Pop back to previous screen with refresh flag
+        Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Failed to add patient")));
+        print("Error response: ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Failed to add patient: ${response.statusCode}")));
       }
     } catch (e) {
+      print("Exception: $e");
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Error: $e")));
     }

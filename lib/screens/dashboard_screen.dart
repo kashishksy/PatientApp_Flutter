@@ -84,9 +84,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Handle add patient navigation
-  void handleAddPatient() {
-    Navigator.pushNamed(context, '/addPatient',
+  void handleAddPatient() async {
+    // Wait for the result from AddPatientScreen
+    final shouldRefresh = await Navigator.pushNamed(context, '/addPatient',
         arguments: {'user': widget.user, 'designation': widget.designation});
+
+    // If returned with refresh flag, fetch patients again
+    if (shouldRefresh == true) {
+      fetchPatients();
+    }
   }
 
   @override
