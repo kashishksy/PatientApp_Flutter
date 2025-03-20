@@ -358,31 +358,46 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
               },
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
+            Center(
               child: ElevatedButton(
                 onPressed: handleSave,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  backgroundColor: Colors.blue,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
                 ),
-                child: const Text(
+                child: Text(
                   'Save Patient Details',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'FunnelDisplay',
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
+            const SizedBox(height: 10),
+            Center(
               child: ElevatedButton(
                 onPressed: handleDelete,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
                 ),
-                child: const Text(
+                child: Text(
                   'Delete Patient',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'FunnelDisplay',
+                  ),
                 ),
               ),
             ),
