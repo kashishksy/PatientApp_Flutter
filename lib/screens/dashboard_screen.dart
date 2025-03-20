@@ -63,9 +63,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // Handle patient press
-  void handlePatientPress(dynamic patient) {
-    Navigator.pushNamed(context, '/patientDetails',
+  void handlePatientPress(dynamic patient) async {
+    final result = await Navigator.pushNamed(context, '/patientDetails',
         arguments: {'patientId': patient['_id']});
+    
+    // If we got a refresh signal (true), fetch patients again
+    if (result == true) {
+      fetchPatients();
+    }
   }
 
   // Toggle dropdown visibility
@@ -345,23 +350,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
 
               // Add Patient Button
-              ElevatedButton(
-                onPressed: handleAddPatient,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
+              Center(
+                child: ElevatedButton(
+                  onPressed: handleAddPatient,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
                   ),
-                ),
-                child: Text(
-                  'Add Patient',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    fontFamily:
-                        'FunnelDisplay', // Use FunnelDisplay for button text
+                  child: Text(
+                    'Add Patient',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'FunnelDisplay', // Use FunnelDisplay for button text
+                    ),
                   ),
                 ),
               ),
