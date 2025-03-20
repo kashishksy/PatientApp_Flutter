@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class TestOption {
   final String type;
@@ -13,17 +15,27 @@ class MedicalReport {
   final String result;
 
   MedicalReport({required this.type, required this.date, required this.result});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'date': date,
+      'result': result,
+      'attachments': []
+    };
+  }
 }
 
 class Patient {
+  final String id;
   final String name;
   final List<MedicalReport> medicalReports;
 
-  Patient({required this.name, required this.medicalReports});
+  Patient({required this.id, required this.name, required this.medicalReports});
 }
 
 class MedicalRecordsScreen extends StatefulWidget {
-  final Patient? patient;
+  final Map<String, dynamic>? patient;
 
   const MedicalRecordsScreen({super.key, this.patient});
 
@@ -36,6 +48,7 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
   bool isModalVisible = false;
   late TestOption selectedTest;
   late String selectedResult;
+  bool isLoading = false;
 
   final List<TestOption> testOptions = [
     TestOption(type: 'Blood Sugar Level', results: ['Normal', 'High', 'Low']),
@@ -50,75 +63,159 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
   @override
   void initState() {
     super.initState();
-    // Default to an empty patient if none provided
-    Patient defaultPatient = Patient(name: 'John Doe', medicalReports: []);
-    medicalReports =
-        (widget.patient?.medicalReports ?? defaultPatient.medicalReports);
+    initializeMedicalReports();
     selectedTest = testOptions[0];
     selectedResult = testOptions[0].results[0];
+  }
 
-    // Equivalent to useEffect
-    print(
-        'Loaded medical records for: ${widget.patient?.name ?? defaultPatient.name}');
+  void initializeMedicalReports() {
+    if (widget.patient != null && widget.patient!['medicalReports'] != null) {
+      medicalReports = List<MedicalReport>.from(
+        widget.patient!['medicalReports'].map(
+          (report) => MedicalReport(
+            type: report['type'],
+            date: report['date'],
+            result: report['result'],
+          ),
+        ),
+      );
+    } else {
+      medicalReports = [];
+    }
   }
 
   String calculateCondition() {
-    int conditionScore = 0;
+    if (medicalReports.isEmpty) return 'No Records';
+    
+    // Get the latest medical report
+    final latestReport = medicalReports.last;
+    final type = latestReport.type;
+    final result = latestReport.result;
 
-    for (var report in medicalReports) {
-      final type = report.type;
-      final result = report.result;
-
-      switch (type) {
-        case 'Blood Sugar Level':
-          conditionScore += result == 'High'
-              ? 2
-              : result == 'Low'
-                  ? 1
-                  : 0;
-          break;
-        case 'Psychiatric Evaluation':
-          conditionScore += result == 'Unstable'
-              ? 3
-              : result == 'Needs Attention'
-                  ? 2
-                  : 0;
-          break;
-        case 'Cholesterol Level':
-          conditionScore += result == 'High'
-              ? 2
-              : result == 'Borderline'
-                  ? 1
-                  : 0;
-          break;
-        case 'ECG':
-          conditionScore += result == 'Critical'
-              ? 3
-              : result == 'Irregular'
-                  ? 2
-                  : 0;
-          break;
-        default:
-          break;
-      }
+    switch (type) {
+      case 'Blood Sugar Level':
+        return result == 'High' ? 'Critical' : result == 'Low' ? 'Medium' : 'Stable';
+      case 'Psychiatric Evaluation':
+        return result == 'Unstable' ? 'Critical' : result == 'Needs Attention' ? 'Medium' : 'Stable';
+      case 'Cholesterol Level':
+        return result == 'High' ? 'Critical' : result == 'Borderline' ? 'Medium' : 'Stable';
+      case 'ECG':
+        return result == 'Critical' ? 'Critical' : result == 'Irregular' ? 'Medium' : 'Stable';
+      default:
+        return 'Stable';
     }
-
-    if (conditionScore > 6) return 'Critical';
-    if (conditionScore > 3) return 'Medium';
-    return 'Stable';
   }
 
-  void handleAddRecord() {
-    final newRecord = MedicalReport(
-      type: selectedTest.type,
-      date: DateTime.now().toString().split(' ')[0],
-      result: selectedResult,
-    );
+  Color getConditionColor(String condition) {
+    switch (condition) {
+      case 'Critical':
+        return Colors.red;
+      case 'Medium':
+        return Colors.amber;
+      case 'Stable':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
 
+  Future<void> handleAddRecord() async {
     setState(() {
-      medicalReports.add(newRecord);
-      isModalVisible = false;
+      isLoading = true;
     });
+
+    try {
+      final newReport = MedicalReport(
+        type: selectedTest.type,
+        date: DateTime.now().toString().split(' ')[0],
+        result: selectedResult,
+      );
+
+      // Add to local state first
+      setState(() {
+        medicalReports.add(newReport);
+      });
+
+      // Calculate new status based on the latest record
+      final newStatus = calculateCondition();
+
+      // Prepare the updated patient data
+      final updatedPatient = Map<String, dynamic>.from(widget.patient!);
+      
+      // Update medical reports in the patient data
+      final List<Map<String, dynamic>> updatedReports = medicalReports.map((report) => {
+        'type': report.type,
+        'date': report.date,
+        'result': report.result,
+        'attachments': []
+      }).toList();
+      
+      // Update both medical reports and status
+      final Map<String, dynamic> updateData = {
+        'medicalReports': updatedReports,
+        'status': newStatus,
+        'name': updatedPatient['name'],
+        'department': updatedPatient['department'],
+        'gender': updatedPatient['gender'],
+        'dateOfAdmission': updatedPatient['dateOfAdmission'],
+        'dateOfDischarge': updatedPatient['dateOfDischarge'],
+      };
+
+      print('Updating patient with data: ${json.encode(updateData)}'); // Debug print
+
+      // Make API call to update
+      final response = await http.put(
+        Uri.parse('https://patientdbrepo.onrender.com/api/patient/update/${widget.patient!['_id']}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode(updateData),
+      );
+
+      print('API Response: ${response.body}'); // Debug print
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        print('Error response: ${response.body}'); // For debugging
+        throw Exception('Failed to update medical records: ${response.statusCode}');
+      }
+
+      // Update the local patient data with new status
+      widget.patient!['status'] = newStatus;
+      widget.patient!['medicalReports'] = updatedReports;
+
+      setState(() {
+        isModalVisible = false;
+      });
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Medical record added and patient status updated'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Pop back to patient details with refresh signal
+      Navigator.pop(context, true);
+
+    } catch (error) {
+      print('Error details: $error'); // For debugging
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error adding medical record: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      // Rollback the local state change
+      setState(() {
+        medicalReports.removeLast();
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Widget _buildRecordCard(MedicalReport report) {
@@ -146,15 +243,16 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final condition = calculateCondition();
+    
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text('Medical Records for ${widget.patient?.name ?? 'John Doe'}'),
+        title: Text('Medical Records for ${widget.patient?['name'] ?? 'Unknown Patient'}'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(
-                context); // This will take the user back to the previous screen
+            // Pop with true to indicate data was changed and dashboard should refresh
+            Navigator.pop(context, true);
           },
         ),
       ),
@@ -163,9 +261,30 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Overall Condition: ${calculateCondition()}',
-              style: const TextStyle(fontSize: 18),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+              decoration: BoxDecoration(
+                color: getConditionColor(condition).withOpacity(0.1),
+                border: Border.all(color: getConditionColor(condition)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.medical_information,
+                    color: getConditionColor(condition),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Overall Condition: $condition',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: getConditionColor(condition),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -202,8 +321,7 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
                   children: [
                     const Text(
                       'Add Medical Record',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 20),
                     const Text('Test Type', style: TextStyle(fontSize: 16)),
@@ -250,8 +368,16 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         ElevatedButton(
-                          onPressed: handleAddRecord,
-                          child: const Text('Add Record'),
+                          onPressed: isLoading ? null : handleAddRecord,
+                          child: isLoading
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Add Record'),
                         ),
                         TextButton(
                           onPressed: () =>
