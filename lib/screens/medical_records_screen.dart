@@ -147,16 +147,22 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title:
+            Text('Medical Records for ${widget.patient?.name ?? 'John Doe'}'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(
+                context); // This will take the user back to the previous screen
+          },
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Medical Records for ${widget.patient?.name ?? 'John Doe'}',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
             Text(
               'Overall Condition: ${calculateCondition()}',
               style: const TextStyle(fontSize: 18),

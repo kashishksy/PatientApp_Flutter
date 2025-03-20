@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class EditPatientScreen extends StatefulWidget {
   final Map<String, dynamic> patient;
 
-  const EditPatientScreen({Key? key, required this.patient}) : super(key: key);
+  const EditPatientScreen({super.key, required this.patient});
 
   @override
   _EditPatientScreenState createState() => _EditPatientScreenState();
@@ -76,6 +76,16 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
     setState(() => isSaving = true);
 
     try {
+      // Print request data for debugging
+      print(
+          'Request URL: https://patientdbrepo.onrender.com/api/patient/update/${widget.patient['_id']}');
+      print('Request body: ${jsonEncode({
+            'name': nameController.text,
+            'age': ageController.text,
+            'gender': gender,
+            'status': status,
+          })}');
+
       final response = await http.put(
         Uri.parse(
             'https://patientdbrepo.onrender.com/api/patient/update/${widget.patient['_id']}'),
@@ -88,8 +98,23 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
         }),
       );
 
-      if (response.statusCode == 200) {
+      // Print response for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      // Accept 200 (OK) or 201 (Created) status codes as success
+      if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
+
+        // Create updated patient data
+        final updatedPatient = {
+          ...widget.patient,
+          'name': nameController.text,
+          'age': ageController.text,
+          'gender': gender,
+          'status': status,
+        };
+
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -98,14 +123,15 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context, {
-                    ...widget.patient,
-                    'name': nameController.text,
-                    'age': ageController.text,
-                    'gender': gender,
-                    'status': status,
-                  });
+                  Navigator.pop(context); // Close dialog
+
+                  // Navigate back to PatientDetailsScreen with updatedPatient
+                  Navigator.pop(context); // Go back to PatientDetailsScreen
+                  Navigator.pushReplacementNamed(context, '/patientDetails',
+                      arguments: {
+                        'patientId': widget.patient['_id'],
+                        'refreshData': true
+                      });
                 },
                 child: const Text('OK'),
               ),
@@ -114,12 +140,25 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
         );
       } else {
         if (!mounted) return;
+
+        // Try to parse response body, but handle cases where it's not valid JSON
+        String errorMessage = 'Failed to update patient record.';
+        try {
+          final responseData = jsonDecode(response.body);
+          errorMessage = responseData['message'] ?? errorMessage;
+        } catch (e) {
+          print('Error parsing response: $e');
+          // If we can't parse JSON, use the raw response body if it's not empty
+          if (response.body.isNotEmpty) {
+            errorMessage = 'Server response: ${response.body}';
+          }
+        }
+
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Update Failed'),
-            content: Text(jsonDecode(response.body)['message'] ??
-                'Failed to update patient record.'),
+            content: Text(errorMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -130,13 +169,14 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
         );
       }
     } catch (error) {
+      print('Exception during update: $error');
       if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Error'),
-          content: const Text(
-              'An error occurred while updating the patient record.'),
+          content: Text(
+              'An error occurred while updating the patient record: $error'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -183,7 +223,9 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
                       actions: [
                         TextButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.pop(context); // Close dialog
+
+                            // Go back to PatientDetailsScreen
                             Navigator.pop(context, 'deleted');
                           },
                           child: const Text('OK'),
@@ -226,8 +268,8 @@ class _EditPatientScreenState extends State<EditPatientScreen> {
                 );
               }
             },
-            child: const Text('Delete'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
       ),
