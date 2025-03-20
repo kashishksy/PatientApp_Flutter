@@ -77,17 +77,17 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
 
   // Navigate to MedicalRecordsScreen
   void handleViewMedicalRecords() async {
-    final result = await Navigator.pushNamed(
-      context, 
-      '/medicalRecords', 
-      arguments: {'patient': patient}
-    );
-    
-    // If we got a refresh signal (true), fetch updated patient details and pass refresh to dashboard
+    final result = await Navigator.pushNamed(context, '/medicalRecords',
+        arguments: {'patient': patient});
+
+    // Only refresh if we added medical records
     if (result == true) {
+      // If records were added, refresh patient details and pass refresh to dashboard
       await fetchPatientDetails();
-      // Pass the refresh signal back to dashboard
-      Navigator.pop(context, true);
+      // We don't immediately navigate back here - we'll let the user decide
+    } else if (result == 'recordsViewed') {
+      // If records were just viewed, refresh data but stay on this screen
+      await fetchPatientDetails();
     }
   }
 
@@ -129,8 +129,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // Always pass refresh signal back to dashboard
-            Navigator.pop(context, true);
+            // Pass refresh signal back to dashboard only if needed
+            Navigator.pop(context, true); // Pass true to refresh dashboard
           },
         ),
       ),
@@ -211,7 +211,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'FunnelDisplay', // Use FunnelDisplay for button text
+                    fontFamily:
+                        'FunnelDisplay', // Use FunnelDisplay for button text
                   ),
                 ),
               ),
@@ -235,7 +236,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'FunnelDisplay', // Use FunnelDisplay for button text
+                    fontFamily:
+                        'FunnelDisplay', // Use FunnelDisplay for button text
                   ),
                 ),
               ),

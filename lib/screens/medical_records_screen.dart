@@ -17,12 +17,7 @@ class MedicalReport {
   MedicalReport({required this.type, required this.date, required this.result});
 
   Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      'date': date,
-      'result': result,
-      'attachments': []
-    };
+    return {'type': type, 'date': date, 'result': result, 'attachments': []};
   }
 }
 
@@ -86,7 +81,7 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
 
   String calculateCondition() {
     if (medicalReports.isEmpty) return 'No Records';
-    
+
     // Get the latest medical report
     final latestReport = medicalReports.last;
     final type = latestReport.type;
@@ -94,13 +89,29 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
 
     switch (type) {
       case 'Blood Sugar Level':
-        return result == 'High' ? 'Critical' : result == 'Low' ? 'Medium' : 'Stable';
+        return result == 'High'
+            ? 'Critical'
+            : result == 'Low'
+                ? 'Medium'
+                : 'Stable';
       case 'Psychiatric Evaluation':
-        return result == 'Unstable' ? 'Critical' : result == 'Needs Attention' ? 'Medium' : 'Stable';
+        return result == 'Unstable'
+            ? 'Critical'
+            : result == 'Needs Attention'
+                ? 'Medium'
+                : 'Stable';
       case 'Cholesterol Level':
-        return result == 'High' ? 'Critical' : result == 'Borderline' ? 'Medium' : 'Stable';
+        return result == 'High'
+            ? 'Critical'
+            : result == 'Borderline'
+                ? 'Medium'
+                : 'Stable';
       case 'ECG':
-        return result == 'Critical' ? 'Critical' : result == 'Irregular' ? 'Medium' : 'Stable';
+        return result == 'Critical'
+            ? 'Critical'
+            : result == 'Irregular'
+                ? 'Medium'
+                : 'Stable';
       default:
         return 'Stable';
     }
@@ -141,15 +152,17 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
 
       // Prepare the updated patient data
       final updatedPatient = Map<String, dynamic>.from(widget.patient!);
-      
+
       // Update medical reports in the patient data
-      final List<Map<String, dynamic>> updatedReports = medicalReports.map((report) => {
-        'type': report.type,
-        'date': report.date,
-        'result': report.result,
-        'attachments': []
-      }).toList();
-      
+      final List<Map<String, dynamic>> updatedReports = medicalReports
+          .map((report) => {
+                'type': report.type,
+                'date': report.date,
+                'result': report.result,
+                'attachments': []
+              })
+          .toList();
+
       // Update both medical reports and status
       final Map<String, dynamic> updateData = {
         'medicalReports': updatedReports,
@@ -161,11 +174,13 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
         'dateOfDischarge': updatedPatient['dateOfDischarge'],
       };
 
-      print('Updating patient with data: ${json.encode(updateData)}'); // Debug print
+      print(
+          'Updating patient with data: ${json.encode(updateData)}'); // Debug print
 
       // Make API call to update
       final response = await http.put(
-        Uri.parse('https://patientdbrepo.onrender.com/api/patient/update/${widget.patient!['_id']}'),
+        Uri.parse(
+            'https://patientdbrepo.onrender.com/api/patient/update/${widget.patient!['_id']}'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -177,7 +192,8 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
 
       if (response.statusCode != 200 && response.statusCode != 201) {
         print('Error response: ${response.body}'); // For debugging
-        throw Exception('Failed to update medical records: ${response.statusCode}');
+        throw Exception(
+            'Failed to update medical records: ${response.statusCode}');
       }
 
       // Update the local patient data with new status
@@ -197,8 +213,7 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
       );
 
       // Pop back to patient details with refresh signal
-      Navigator.pop(context, true);
-
+      Navigator.pop(context, 'recordsViewed');
     } catch (error) {
       print('Error details: $error'); // For debugging
       ScaffoldMessenger.of(context).showSnackBar(
@@ -244,15 +259,22 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
   @override
   Widget build(BuildContext context) {
     final condition = calculateCondition();
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Medical Records for ${widget.patient?['name'] ?? 'Unknown Patient'}'),
+        title: Text(
+            'Medical Records for ${widget.patient?['name'] ?? 'Unknown Patient'}'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // Pop with true to indicate data was changed and dashboard should refresh
-            Navigator.pop(context, true);
+            // Only pass refresh signal if we actually added records
+            // Otherwise just go back without causing further navigation
+            if (medicalReports.isNotEmpty) {
+              Navigator.pop(context,
+                  'recordsViewed'); // Use a different signal than 'true'
+            } else {
+              Navigator.pop(context); // Just go back without refresh
+            }
           },
         ),
       ),
@@ -321,7 +343,8 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
                   children: [
                     const Text(
                       'Add Medical Record',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 20),
                     const Text('Test Type', style: TextStyle(fontSize: 16)),
