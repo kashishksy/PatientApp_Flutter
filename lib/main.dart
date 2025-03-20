@@ -65,22 +65,9 @@ class MyApp extends StatelessWidget {
 
           case '/medicalRecords':
             final args = settings.arguments as Map<String, dynamic>;
-            // Create a Patient object from the map
-            final patientData = args['patient'];
             return MaterialPageRoute(
               builder: (_) => MedicalRecordsScreen(
-                patient: Patient(
-                  name: patientData['name'],
-                  medicalReports: patientData['medicalReports'] != null
-                      ? (patientData['medicalReports'] as List)
-                          .map((report) => MedicalReport(
-                                type: report['type'] ?? 'Unknown',
-                                date: report['date'] ?? 'Unknown',
-                                result: report['result'] ?? 'Unknown',
-                              ))
-                          .toList()
-                      : [],
-                ),
+                patient: args['patient'],
               ),
             );
 
