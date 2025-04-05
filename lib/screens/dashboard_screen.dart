@@ -3,6 +3,98 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+class PatientSearchDelegate extends SearchDelegate<dynamic> {
+  final List<dynamic> patients;
+  final Function(dynamic) onPatientSelected;
+
+  PatientSearchDelegate(
+      {required this.patients, required this.onPatientSelected});
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return buildSearchResults();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return buildSearchResults();
+  }
+
+  Widget buildSearchResults() {
+    final filteredPatients = patients.where((patient) {
+      return patient['name']
+          .toString()
+          .toLowerCase()
+          .contains(query.toLowerCase());
+    }).toList();
+
+    return ListView.builder(
+      itemCount: filteredPatients.length,
+      itemBuilder: (context, index) {
+        final patient = filteredPatients[index];
+        return ListTile(
+          leading: CircleAvatar(
+            child: Text(patient['name'][0].toUpperCase()),
+          ),
+          title: Text(
+            patient['name'],
+            style: TextStyle(
+              fontFamily: 'FunnelDisplay',
+              fontSize: 16,
+            ),
+          ),
+          subtitle: Text(
+            'Status: ${patient['status']}',
+            style: TextStyle(
+              fontFamily: 'FunnelDisplay',
+              color: _getStatusColor(patient['status']),
+            ),
+          ),
+          onTap: () {
+            close(context, null);
+            onPatientSelected(patient);
+          },
+        );
+      },
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'critical':
+        return Colors.red;
+      case 'stable':
+        return Colors.green;
+      case 'medium':
+        return Colors.orange;
+      default:
+        return Colors.black;
+    }
+  }
+}
+
 class DashboardScreen extends StatefulWidget {
   final String user;
   final String designation;
@@ -66,7 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void handlePatientPress(dynamic patient) async {
     final result = await Navigator.pushNamed(context, '/patientDetails',
         arguments: {'patientId': patient['_id']});
-    
+
     // If we got a refresh signal (true), fetch patients again
     if (result == true) {
       fetchPatients();
@@ -100,6 +192,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  // Add this method to handle search
+  void handleSearch() {
+    showSearch(
+      context: context,
+      delegate: PatientSearchDelegate(
+        patients: patients,
+        onPatientSelected: (patient) {
+          handlePatientPress(patient);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -129,6 +234,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Navigator.pop(context);
           },
         ),
+        actions: [
+          // Add search icon in AppBar
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: handleSearch,
+          ),
+        ],
       ),
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -172,30 +284,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               SizedBox(height: 20),
 
-              // Search Bar
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search Patients',
-                  hintStyle: TextStyle(
-                    fontFamily:
-                        'FunnelDisplay', // Use FunnelDisplay for hint text
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  border: OutlineInputBorder(
+              // Replace your existing TextField search with this:
+              GestureDetector(
+                onTap: handleSearch,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide.none,
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, color: Colors.grey[600]),
+                      SizedBox(width: 10),
+                      Text(
+                        'Search Patients...',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontFamily: 'FunnelDisplay',
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                style: TextStyle(
-                  fontFamily:
-                      'FunnelDisplay', // Use FunnelDisplay for input text
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                  });
-                },
               ),
               SizedBox(height: 20),
 
@@ -366,7 +479,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'FunnelDisplay', // Use FunnelDisplay for button text
+                      fontFamily:
+                          'FunnelDisplay', // Use FunnelDisplay for button text
                     ),
                   ),
                 ),
