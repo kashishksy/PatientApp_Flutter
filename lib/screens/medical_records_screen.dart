@@ -5,8 +5,19 @@ import 'dart:convert';
 class TestOption {
   final String type;
   final List<String> results;
+  final bool isNumeric;
+  final double? minValue;
+  final double? maxValue;
+  final String? unit;
 
-  TestOption({required this.type, required this.results});
+  TestOption({
+    required this.type,
+    required this.results,
+    this.isNumeric = false,
+    this.minValue,
+    this.maxValue,
+    this.unit,
+  });
 }
 
 class MedicalReport {
@@ -44,15 +55,33 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
   late TestOption selectedTest;
   late String selectedResult;
   bool isLoading = false;
+  final TextEditingController _numericValueController = TextEditingController();
 
   final List<TestOption> testOptions = [
-    TestOption(type: 'Blood Sugar Level', results: ['Normal', 'High', 'Low']),
     TestOption(
-        type: 'Psychiatric Evaluation',
-        results: ['Stable', 'Unstable', 'Needs Attention']),
+      type: 'Blood Sugar Level',
+      results: ['Normal', 'High', 'Low'],
+      isNumeric: true,
+      minValue: 70,
+      maxValue: 200,
+      unit: 'mg/dL',
+    ),
     TestOption(
-        type: 'Cholesterol Level', results: ['Normal', 'Borderline', 'High']),
-    TestOption(type: 'ECG', results: ['Normal', 'Irregular', 'Critical']),
+      type: 'Psychiatric Evaluation',
+      results: ['Stable', 'Unstable', 'Needs Attention'],
+    ),
+    TestOption(
+      type: 'Cholesterol Level',
+      results: ['Normal', 'Borderline', 'High'],
+      isNumeric: true,
+      minValue: 125,
+      maxValue: 200,
+      unit: 'mg/dL',
+    ),
+    TestOption(
+      type: 'ECG',
+      results: ['Normal', 'Irregular', 'Critical'],
+    ),
   ];
 
   @override
@@ -61,6 +90,12 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
     initializeMedicalReports();
     selectedTest = testOptions[0];
     selectedResult = testOptions[0].results[0];
+  }
+
+  @override
+  void dispose() {
+    _numericValueController.dispose();
+    super.dispose();
   }
 
   void initializeMedicalReports() {
@@ -87,31 +122,32 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
     final type = latestReport.type;
     final result = latestReport.result;
 
+    // Extract the interpretation part from numeric results
+    String interpretation = result;
+    if (result.contains('(') && result.contains(')')) {
+      // Extract interpretation from format like "120 mg/dL (Normal)"
+      interpretation = result.substring(result.lastIndexOf('(') + 1, result.lastIndexOf(')'));
+    }
+
     switch (type) {
       case 'Blood Sugar Level':
-        return result == 'High'
-            ? 'Critical'
-            : result == 'Low'
-                ? 'Medium'
-                : 'Stable';
+        if (interpretation.contains('Critical')) return 'Critical';
+        if (interpretation.contains('High')) return 'Critical';
+        if (interpretation.contains('Low')) return 'Medium';
+        return 'Stable';
       case 'Psychiatric Evaluation':
-        return result == 'Unstable'
-            ? 'Critical'
-            : result == 'Needs Attention'
-                ? 'Medium'
-                : 'Stable';
+        if (interpretation.contains('Unstable')) return 'Critical';
+        if (interpretation.contains('Needs Attention')) return 'Medium';
+        return 'Stable';
       case 'Cholesterol Level':
-        return result == 'High'
-            ? 'Critical'
-            : result == 'Borderline'
-                ? 'Medium'
-                : 'Stable';
+        if (interpretation.contains('Critical')) return 'Critical';
+        if (interpretation.contains('High')) return 'Critical';
+        if (interpretation.contains('Low')) return 'Medium';
+        return 'Stable';
       case 'ECG':
-        return result == 'Critical'
-            ? 'Critical'
-            : result == 'Irregular'
-                ? 'Medium'
-                : 'Stable';
+        if (interpretation.contains('Critical')) return 'Critical';
+        if (interpretation.contains('Irregular')) return 'Medium';
+        return 'Stable';
       default:
         return 'Stable';
     }
@@ -130,7 +166,57 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
     }
   }
 
+  String calculateResultFromNumericValue(double value, TestOption test) {
+    if (test.type == 'Blood Sugar Level') {
+      if (value < 70) return 'Critical';  // Hypoglycemia
+      if (value < 90) return 'Low';
+      if (value > 180) return 'Critical'; // Hyperglycemia
+      if (value > 140) return 'High';
+      return 'Normal';
+    } else if (test.type == 'Cholesterol Level') {
+      if (value < 100) return 'Critical'; // Very low cholesterol
+      if (value < 125) return 'Low';
+      if (value > 240) return 'Critical'; // Very high cholesterol
+      if (value > 200) return 'High';
+      return 'Normal';
+    }
+    return 'Normal';
+  }
+
+  bool validateNumericInput(String input, TestOption test) {
+    if (!test.isNumeric) return true;
+    if (input.isEmpty) return false;
+    return double.tryParse(input) != null;
+  }
+
+  String getValidationMessage(String input, TestOption test) {
+    if (!test.isNumeric) return '';
+    if (input.isEmpty) return 'Please enter a value';
+    if (double.tryParse(input) == null) return 'Please enter a valid number';
+    return '';
+  }
+
   Future<void> handleAddRecord() async {
+    if (selectedTest.isNumeric) {
+      if (_numericValueController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please enter a numeric value')),
+        );
+        return;
+      }
+      
+      final validationMessage = getValidationMessage(_numericValueController.text, selectedTest);
+      if (validationMessage.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(validationMessage)),
+        );
+        return;
+      }
+      
+      final numericValue = double.parse(_numericValueController.text);
+      selectedResult = calculateResultFromNumericValue(numericValue, selectedTest);
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -139,7 +225,9 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
       final newReport = MedicalReport(
         type: selectedTest.type,
         date: DateTime.now().toString().split(' ')[0],
-        result: selectedResult,
+        result: selectedTest.isNumeric 
+            ? '${_numericValueController.text} ${selectedTest.unit} (${selectedResult})'
+            : selectedResult,
       );
 
       // Add to local state first
@@ -227,6 +315,7 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
         medicalReports.removeLast();
       });
     } finally {
+      _numericValueController.clear();
       setState(() {
         isLoading = false;
       });
@@ -254,6 +343,29 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'critical':
+        return Colors.red;
+      case 'high':
+        return Colors.orange;
+      case 'low':
+        return Colors.amber;
+      case 'normal':
+        return Colors.green;
+      case 'stable':
+        return Colors.green;
+      case 'unstable':
+        return Colors.red;
+      case 'needs attention':
+        return Colors.orange;
+      case 'irregular':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
@@ -343,8 +455,7 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
                   children: [
                     const Text(
                       'Add Medical Record',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 20),
                     const Text('Test Type', style: TextStyle(fontSize: 16)),
@@ -354,9 +465,11 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
                       onChanged: (value) {
                         if (value != null) {
                           setState(() {
-                            selectedTest = testOptions
-                                .firstWhere((test) => test.type == value);
-                            selectedResult = selectedTest.results[0];
+                            selectedTest = testOptions.firstWhere((test) => test.type == value);
+                            if (!selectedTest.isNumeric) {
+                              selectedResult = selectedTest.results[0];
+                            }
+                            _numericValueController.clear();
                           });
                         }
                       },
@@ -368,24 +481,56 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
                       }).toList(),
                     ),
                     const SizedBox(height: 10),
-                    const Text('Result', style: TextStyle(fontSize: 16)),
-                    DropdownButton<String>(
-                      isExpanded: true,
-                      value: selectedResult,
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            selectedResult = value;
-                          });
-                        }
-                      },
-                      items: selectedTest.results.map((result) {
-                        return DropdownMenuItem<String>(
-                          value: result,
-                          child: Text(result),
-                        );
-                      }).toList(),
-                    ),
+                    if (selectedTest.isNumeric) ...[
+                      Text(
+                        'Value (${selectedTest.unit})',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      TextField(
+                        controller: _numericValueController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: 'Enter value (${selectedTest.unit})',
+                          errorText: getValidationMessage(_numericValueController.text, selectedTest),
+                        ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && validateNumericInput(value, selectedTest)) {
+                            final numericValue = double.parse(value);
+                            setState(() {
+                              selectedResult = calculateResultFromNumericValue(numericValue, selectedTest);
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Interpretation: $selectedResult',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _getStatusColor(selectedResult),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ] else ...[
+                      const Text('Result', style: TextStyle(fontSize: 16)),
+                      DropdownButton<String>(
+                        isExpanded: true,
+                        value: selectedResult,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedResult = value;
+                            });
+                          }
+                        },
+                        items: selectedTest.results.map((result) {
+                          return DropdownMenuItem<String>(
+                            value: result,
+                            child: Text(result),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -403,8 +548,10 @@ class _MedicalRecordsScreenState extends State<MedicalRecordsScreen> {
                               : const Text('Add Record'),
                         ),
                         TextButton(
-                          onPressed: () =>
-                              setState(() => isModalVisible = false),
+                          onPressed: () {
+                            _numericValueController.clear();
+                            setState(() => isModalVisible = false);
+                          },
                           child: const Text('Cancel'),
                         ),
                       ],
